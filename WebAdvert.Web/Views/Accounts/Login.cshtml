@@ -3,7 +3,7 @@
 <div class="row">
     <div class="col-md-4">
         <h4>Login using your email address and password</h4>
-        
+
         <hr />
 
         <form method="post" asp-controller="Accounts" asp-action="Login">
@@ -26,15 +26,20 @@
                 <div class="checkbox">
                     <label asp-for="RememberMe"></label>
                     <input asp-for="RememberMe" />
-                    
+
                 </div>
             </div>
             <button type="submit">Login</button>
             <h5>
-        <a asp-controller="Accounts" asp-action="Signup">
-            If you are not a member you can sign up here
-        </a>
-        </h5>
+                <a asp-controller="Accounts" asp-action="ForgetPassword">
+                    Forget password
+                </a>
+            </h5>
+            <h5>
+                <a asp-controller="Accounts" asp-action="Signup">
+                    If you are not a member you can sign up here
+                </a>
+            </h5>
         </form>
     </div>
 </div>

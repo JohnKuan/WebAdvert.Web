@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.Extensions.CognitoAuthentication;
 using Amazon.AspNetCore.Identity.Cognito;
+using Amazon.CognitoIdentityProvider.Model;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -64,14 +65,14 @@ namespace WebAdvert.Web.Controllers
                     return View(model);
                 }
 
-            } 
+            }
 
             return View(model);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Confirm(ConfirmModel model)  
-        {            
+        public async Task<IActionResult> Confirm(ConfirmModel model)
+        {
             return View(model);
         }
 
@@ -129,7 +130,8 @@ namespace WebAdvert.Web.Controllers
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Index", "Home");
-                } else
+                }
+                else
                 {
                     ModelState.AddModelError("LoginError", "Email and password do not match");
                 }
@@ -137,5 +139,101 @@ namespace WebAdvert.Web.Controllers
 
             return View("Login", model);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ForgetPassword(ForgetPasswordModel model)
+        {
+            return View(model);
+        }
+
+        [HttpPost]
+        [ActionName("ForgetPassword")]
+        public async Task<IActionResult> ForgetPasswordPost(ForgetPasswordModel model)
+        {
+            if (ModelState.IsValid)
+            {
+
+                var cognitoUserManager = _userManager as CognitoUserManager<CognitoUser>;
+
+                var cognitoSignInManager = _signInManager as CognitoSignInManager<CognitoUser>;
+
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                if (user != null)
+
+                {
+
+                    var result = await cognitoUserManager.ResetPasswordAsync(user);
+
+                    if (result.Succeeded)
+
+                        return RedirectToAction("ResetPassword", new { model.Email });
+
+                    else
+
+                        result.Errors.ToList().ForEach(e => ModelState.AddModelError(e.Code, e.Description));
+
+                }
+
+            }
+
+            return View(model);
+        }
+
+        public async Task<IActionResult> ResetPassword(string email)
+
+        {
+
+            var model = new ResetPasswordModel() { Email = email };
+
+            return View(model);
+
+        }
+
+
+
+        [HttpPost]
+
+        public async Task<IActionResult> ResetPassword(ResetPasswordModel model)
+
+        {
+
+            if (ModelState.IsValid)
+
+            {
+
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+
+
+                if (user != null)
+
+                {
+
+                    var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+                    if (result.Succeeded)
+
+                        return RedirectToAction("Login");
+
+                    else
+
+                        result.Errors.ToList().ForEach(e => ModelState.AddModelError(e.Code, e.Description));
+
+                }
+
+                else
+
+                    ModelState.AddModelError("NotFound", "User not found");
+
+            }
+
+
+
+            return View(model);
+
+        }
+
+
     }
 }
