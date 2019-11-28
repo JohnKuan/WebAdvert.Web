@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,34 @@ namespace WebAdvert.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+            // Adds Amazon Cognito as Identity Provider
+            services.AddCognitoIdentity();
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
+
+
+
+            //services.AddCognitoIdentity(config =>
+            //    config.Password = new Microsoft.AspNetCore.Identity.PasswordOptions
+            //    {
+            //        // not for production --> get from cognito properly when fixed
+            //        RequireDigit = false,
+            //        RequiredLength = 6,
+            //        RequiredUniqueChars = 0,
+            //        RequireLowercase = false,
+            //        RequireNonAlphanumeric = false,
+            //        RequireUppercase = false
+            //    });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/Accounts/Login";
+            });
+            services.AddMvc();
+            //services.AddControllersWithViews();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -45,6 +73,7 @@ namespace WebAdvert.Web
             app.UseRouting();
 
             app.UseAuthorization();
+            app.UseAuthentication();
 
             app.UseEndpoints(endpoints =>
             {

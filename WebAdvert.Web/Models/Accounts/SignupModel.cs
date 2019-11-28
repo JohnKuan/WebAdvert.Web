@@ -18,12 +18,8 @@ namespace WebAdvert.Web.Models.Accounts
         [Required]
         [DataType(dataType:DataType.Password)]
         [Compare("Password", ErrorMessage = "Password and its confirmation do not match")]
+        [Display(Name ="Confirm Password")]
         public string ConfirmPassword { get; set; }
-
-        public SignupModel()
-        {
-            
-        }
     }
 }
 
