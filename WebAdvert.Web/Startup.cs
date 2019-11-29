@@ -32,6 +32,7 @@ namespace WebAdvert.Web
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            services.AddMvc(option => option.EnableEndpointRouting = false);
 
 
             //services.AddCognitoIdentity(config =>
@@ -50,7 +51,8 @@ namespace WebAdvert.Web
             {
                 options.LoginPath = "/Accounts/Login";
             });
-            services.AddMvc();
+            //services.AddAutoMapper();
+
             //services.AddControllersWithViews();
         }
 
@@ -70,17 +72,18 @@ namespace WebAdvert.Web
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseRouting();
-
+            
+            app.UseCookiePolicy();
             app.UseAuthorization();
             app.UseAuthentication();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
+            app.UseMvcWithDefaultRoute();
+            //app.UseRouting();
+            //app.UseEndpoints(endpoints =>
+            //{
+            //    endpoints.MapControllerRoute(
+            //        name: "default",
+            //        pattern: "{controller=Home}/{action=Index}/{id?}");
+            //});
         }
     }
 }
