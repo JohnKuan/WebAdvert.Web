@@ -29,7 +29,7 @@ namespace WebAdvert.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Signup()
+        public IActionResult Signup()
         {
             var model = new SignupModel();
             return View(model);
@@ -71,7 +71,7 @@ namespace WebAdvert.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Confirm(ConfirmModel model)
+        public IActionResult Confirm(ConfirmModel model)
         {
             return View(model);
         }
@@ -93,21 +93,13 @@ namespace WebAdvert.Web.Controllers
                 }
 
 
-                var result = await (_userManager as CognitoUserManager<CognitoUser>).ConfirmSignUpAsync(user, model.Code, true).ConfigureAwait(false);
-                //var result = await _userManager.ConfirmEmailAsync (user, model.Code);
-                if (result.Succeeded)
-                {
-                    return RedirectToAction("Index", "Home");
-                }
-                else
-                {
-                    foreach (var item in result.Errors)
-                    {
-                        ModelState.AddModelError(item.Code, item.Description);
-                    }
+                var result = await ((CognitoUserManager<CognitoUser>)_userManager)
+                    .ConfirmSignUpAsync(user, model.Code, true).ConfigureAwait(false);
+                if (result.Succeeded) return RedirectToAction("Index", "Home");
 
-                    return View(model);
-                }
+                foreach (var item in result.Errors) ModelState.AddModelError(item.Code, item.Description);
+
+                return View(model);
             }
 
 
@@ -115,7 +107,7 @@ namespace WebAdvert.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Login(LoginModel model)
+        public IActionResult Login(LoginModel model)
         {
             return View(model);
         }
@@ -141,7 +133,7 @@ namespace WebAdvert.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ForgetPassword(ForgetPasswordModel model)
+        public IActionResult ForgetPassword(ForgetPasswordModel model)
         {
             return View(model);
         }
@@ -157,7 +149,7 @@ namespace WebAdvert.Web.Controllers
 
                 var cognitoSignInManager = _signInManager as CognitoSignInManager<CognitoUser>;
 
-                var user = await _userManager.FindByEmailAsync(model.Email);
+                var user = await cognitoUserManager.FindByEmailAsync(model.Email);
 
                 if (user != null)
 
