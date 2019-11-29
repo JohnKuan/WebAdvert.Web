@@ -9,19 +9,20 @@ using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WebAdvert.Web.Models.Accounts;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WebAdvert.Web.Controllers
 {
-    public class Accounts : Controller
+    public class AccountsController : Controller
     {
 
         private readonly SignInManager<CognitoUser> _signInManager;
         private readonly UserManager<CognitoUser> _userManager;
         private readonly CognitoUserPool _pool;
 
-        public Accounts(SignInManager<CognitoUser> signInManager, UserManager<CognitoUser> userManager, CognitoUserPool pool)
+        public AccountsController(SignInManager<CognitoUser> signInManager, UserManager<CognitoUser> userManager, CognitoUserPool pool)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -113,23 +114,41 @@ namespace WebAdvert.Web.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         [ActionName("Login")]
-        public async Task<IActionResult> LoginPost(LoginModel model)
+        public async Task<IActionResult> LoginPost(LoginModel model, string returnUrl = null)
         {
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false).ConfigureAwait(false);
+                var result = await _signInManager.PasswordSignInAsync(model.Email,
+                    model.Password, model.RememberMe, false).ConfigureAwait(false);
                 if (result.Succeeded)
                 {
-                    return RedirectToAction("Index", "Home");
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+                    else
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
                 }
                 else
                 {
                     ModelState.AddModelError("LoginError", "Email and password do not match");
+                    return View(model);
                 }
+            } else
+            {
+                return View("Login", model);
             }
+            
+        }
 
-            return View("Login", model);
+        public async Task<IActionResult> Signout()
+        {
+            if (User.Identity.IsAuthenticated) await _signInManager.SignOutAsync().ConfigureAwait(false);
+            return RedirectToAction("Login");
         }
 
         [HttpGet]
