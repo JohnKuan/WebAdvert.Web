@@ -1,14 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Polly;
+using Polly.Extensions.Http;
+using System;
+using System.Net;
+using System.Net.Http;
+using WebAdvert.Web.ServiceClients;
+using WebAdvert.Web.Services;
 
 namespace WebAdvert.Web
 {
@@ -34,7 +36,6 @@ namespace WebAdvert.Web
 
             services.AddMvc(option => option.EnableEndpointRouting = false);
 
-
             //services.AddCognitoIdentity(config =>
             //    config.Password = new Microsoft.AspNetCore.Identity.PasswordOptions
             //    {
@@ -51,9 +52,26 @@ namespace WebAdvert.Web
             {
                 options.LoginPath = "/Accounts/Login";
             });
+
+            services.AddTransient<IFileUploader, S3FileUploader>();
+            services.AddHttpClient<IAdvertApiClient, AdvertApiClient>()
+                .AddPolicyHandler(GetRetryPolicy())
+                .AddPolicyHandler(GetCircuitBreakerPatternPolicy());
             //services.AddAutoMapper();
 
             //services.AddControllersWithViews();
+        }
+
+        private IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPatternPolicy()
+        {
+            return HttpPolicyExtensions.HandleTransientHttpError().CircuitBreakerAsync(3, TimeSpan.FromSeconds(30));
+        }
+
+        private IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions.HandleTransientHttpError()
+                .OrResult(msg => msg.StatusCode == HttpStatusCode.NotFound)
+                .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -72,7 +90,6 @@ namespace WebAdvert.Web
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            
             app.UseCookiePolicy();
             app.UseAuthorization();
             app.UseAuthentication();
