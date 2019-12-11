@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Http;
 using WebAdvert.Web.ServiceClients;
 using WebAdvert.Web.Services;
+using AutoMapper;
 
 namespace WebAdvert.Web
 {
@@ -54,6 +55,10 @@ namespace WebAdvert.Web
             });
 
             services.AddTransient<IFileUploader, S3FileUploader>();
+            services.AddAutoMapper(typeof(Startup));
+            services.AddHttpClient<ISearchApiClient, SearchApiClient>()
+                .AddPolicyHandler(GetRetryPolicy())
+                .AddPolicyHandler(GetCircuitBreakerPatternPolicy());
             services.AddHttpClient<IAdvertApiClient, AdvertApiClient>()
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetCircuitBreakerPatternPolicy());
